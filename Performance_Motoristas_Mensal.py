@@ -73,6 +73,8 @@ def criar_dfs_excel():
     
     st.session_state.df_historico = pd.merge(st.session_state.df_historico, st.session_state.df_frota, on='Veiculo', how='left')
 
+    st.session_state.df_historico['Apenas Data'] = st.session_state.df_historico['Data'].dt.date
+
 def plotar_listas_analise(df_ref, coluna_df_ref, subheader):
 
     lista_ref = df_ref[coluna_df_ref].unique().tolist()
