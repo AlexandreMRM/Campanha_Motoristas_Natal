@@ -213,8 +213,6 @@ if atualizar_dfs_excel:
 
 if data_inicial and data_final:
 
-    st.session_state.df_historico
-
     df_filtro_data = st.session_state.df_historico[(st.session_state.df_historico['Apenas Data']>=data_inicial) & 
                                                    (st.session_state.df_historico['Apenas Data']<=data_final)].reset_index(drop=True)
     
