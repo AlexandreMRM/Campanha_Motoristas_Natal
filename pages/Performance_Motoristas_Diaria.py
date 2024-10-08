@@ -15,7 +15,7 @@ def criar_dfs_excel():
     credentials = credentials.with_scopes(scope)
     client = gspread.authorize(credentials)
     
-    spreadsheet = client.open_by_key('1IUbIl8j3cU07-YglVmg6AzJZRRTpY0iTfcfvoZm9jhI')
+    spreadsheet = client.open_by_key('1m0qYTv7b0RIz9uqCrIuzRzLxc43Kz1utzLATv0HO8n0')
 
     lista_abas = ['BD - Motoristas', 'BD - Frota | Tipo', 'BD - Historico']
 
