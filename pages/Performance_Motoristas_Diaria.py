@@ -59,7 +59,9 @@ def criar_dfs_excel():
 
             st.session_state.df_historico.loc[st.session_state.df_historico['Colaborador']==motorista, 'Colaborador']=\
                 st.session_state.df_motoristas.loc[st.session_state.df_motoristas['Motorista Sofit']==motorista, 'Motorista Análise'].values[0]
-            
+
+    st.session_state.df_historico['Data'] = pd.to_datetime(st.session_state.df_historico['Data'], format='%d/%m/%Y %H:%M:%S')
+    
     st.session_state.df_historico['ano'] = st.session_state.df_historico['Data'].dt.year
 
     st.session_state.df_historico['mes'] = st.session_state.df_historico['Data'].dt.month
