@@ -33,13 +33,21 @@ def criar_dfs_excel():
 
         st.session_state[df_hotel] = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
 
+    st.session_state.df_historico['Consumo real'] = st.session_state.df_historico['Consumo real'].str.replace(',', '.')
+
+    st.session_state.df_historico['Consumo real'] = pd.to_numeric(st.session_state.df_historico['Consumo real'], errors='coerce')
+
+    st.session_state.df_historico['Consumo estimado'] = st.session_state.df_historico['Consumo estimado'].str.replace(',', '.')
+
+    st.session_state.df_historico['Consumo estimado'] = pd.to_numeric(st.session_state.df_historico['Consumo estimado'], errors='coerce')
+
     st.session_state.df_frota['Veiculo'] = st.session_state.df_frota['Veiculo'].astype(str)
 
     st.session_state.df_historico = st.session_state.df_historico[st.session_state.df_historico['Veículo']!='Total'].reset_index(drop=True)
 
     for index in range(len(st.session_state.df_historico)):
 
-        if pd.isna(st.session_state.df_historico.at[index, 'Veículo']):
+        if st.session_state.df_historico.at[index, 'Veículo']=='':
 
             st.session_state.df_historico.at[index, 'Veículo']=st.session_state.df_historico.at[index-1, 'Veículo']
 
