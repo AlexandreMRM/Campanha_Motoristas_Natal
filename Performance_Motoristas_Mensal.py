@@ -47,9 +47,9 @@ def criar_dfs_excel():
 
     for index in range(len(st.session_state.df_historico)):
 
-        if pd.isna(st.session_state.df_historico.at[index, 'Veículo']):
+        if pd.isna(st.session_state.df_historico.at[index, 'Veiculo']):
 
-            st.session_state.df_historico.at[index, 'Veículo']=st.session_state.df_historico.at[index-1, 'Veículo']
+            st.session_state.df_historico.at[index, 'Veiculo']=st.session_state.df_historico.at[index-1, 'Veiculo']
 
     lista_motoristas_historico = st.session_state.df_historico['Colaborador'].unique().tolist()
 
