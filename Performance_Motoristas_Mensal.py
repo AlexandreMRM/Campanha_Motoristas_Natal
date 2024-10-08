@@ -47,9 +47,11 @@ def criar_dfs_excel():
 
     for index in range(len(st.session_state.df_historico)):
 
-        if pd.isna(st.session_state.df_historico.at[index, 'Veiculo']):
+        if pd.isna(st.session_state.df_historico.at[index, 'Veículo']):
 
-            st.session_state.df_historico.at[index, 'Veiculo']=st.session_state.df_historico.at[index-1, 'Veiculo']
+            st.session_state.df_historico.at[index, 'Veículo']=st.session_state.df_historico.at[index-1, 'Veículo']
+
+    st.dataframe(st.session_state.df_historico)
 
     lista_motoristas_historico = st.session_state.df_historico['Colaborador'].unique().tolist()
 
@@ -211,8 +213,6 @@ if atualizar_dfs_excel:
     criar_dfs_excel()
 
 if ano_analise and mes_analise:
-
-    st.session_state.df_historico
 
     df_filtro_data = st.session_state.df_historico[(st.session_state.df_historico['ano']==ano_analise) & 
                                                    (st.session_state.df_historico['mes']==mes_analise)].reset_index(drop=True)
