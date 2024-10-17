@@ -46,6 +46,20 @@ def criar_dfs_excel():
 
     st.session_state.df_historico = st.session_state.df_historico[st.session_state.df_historico['Veículo']!='Total'].reset_index(drop=True)
 
+    st.session_state.df_historico['Distância de abastecimento'] = \
+    pd.to_numeric(st.session_state.df_historico['Distância de abastecimento'], errors='coerce')
+
+    st.session_state.df_historico['Quantidade'] = st.session_state.df_historico['Quantidade'].str.replace(',', '.')
+
+    st.session_state.df_historico['Quantidade'] = \
+    pd.to_numeric(st.session_state.df_historico['Quantidade'], errors='coerce')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace('R$ ', '')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace('.', '')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace(',', '.')
+
     for index in range(len(st.session_state.df_historico)):
 
         if st.session_state.df_historico.at[index, 'Veículo']=='':
