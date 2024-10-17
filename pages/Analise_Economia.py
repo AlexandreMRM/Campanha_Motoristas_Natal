@@ -153,7 +153,7 @@ if atualizar_dfs_excel:
 
     criar_dfs_excel()
 
-# st.session_state.df_historico
+st.session_state.df_historico
 
 if data_inicial and data_final and data_inicial_base and data_final_base:
 
