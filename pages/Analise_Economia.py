@@ -50,6 +50,12 @@ def criar_dfs_excel():
     st.session_state.df_historico['Quantidade'] = \
     pd.to_numeric(st.session_state.df_historico['Quantidade'], errors='coerce')
 
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace('R$ ', '')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace('.', '')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace(',', '.')
+
     st.session_state.df_frota['Veiculo'] = st.session_state.df_frota['Veiculo'].astype(str)
 
     st.session_state.df_historico = st.session_state.df_historico[st.session_state.df_historico['Veículo']!='Total'].reset_index(drop=True)
