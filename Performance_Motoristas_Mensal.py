@@ -6,6 +6,7 @@ import webbrowser
 from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 def criar_dfs_excel():
 
@@ -176,6 +177,20 @@ def plotar_tabela_mes_atual(df_ref, coluna_group, dict_colunas):
 
     container_dataframe.dataframe(df_group, hide_index=True, use_container_width=True)
 
+def criar_coluna_performance(df_resumo_performance):
+
+    df_resumo_performance['Performance'] = round(df_resumo_performance['meta_batida'] / df_resumo_performance['Rota'], 2)
+
+    df_resumo_performance = df_resumo_performance.sort_values(by='Performance', ascending=False)
+
+    df_resumo_performance['Performance'] = df_resumo_performance['Performance'].astype(float) * 100
+
+    df_resumo_performance['Performance'] = df_resumo_performance['Performance'].apply(lambda x: f'{x:.0f}%')
+
+    df_resumo_performance = df_resumo_performance.rename(columns={'meta_batida': 'Metas Batidas', 'Rota': 'Serviços'})
+
+    return df_resumo_performance
+
 st.set_page_config(layout='wide')
 
 st.title('Performance Mensal Motoristas - Natal')
@@ -188,7 +203,13 @@ if 'df_motoristas' not in st.session_state:
 
 row0 = st.columns(2)
 
-row2 = st.columns(1)
+row1 = st.columns(1)
+
+row2 = st.columns(2)
+
+row3 = st.columns(1)
+
+row4 = st.columns(2)
 
 with row0[0]:
 
@@ -231,91 +252,147 @@ if ano_analise and mes_analise:
     
         tipo_analise = st.radio('Tipo de Análise', ['Motorista', 'Tipo de Veículo'], index=None)
 
-    with row0[1]:
+    with row1[0]:
 
-        if tipo_analise=='Motorista':
-
-            motorista = plotar_listas_analise(df_filtro_data, 'Colaborador', 'Motoristas')
-
-        elif tipo_analise=='Tipo de Veículo':
-
-            tipo_de_veiculo = plotar_listas_analise(df_filtro_data, 'Tipo de Veiculo', 'Tipos de Veículos')
+        st.divider()
         
-    if tipo_analise=='Tipo de Veículo' and tipo_de_veiculo:
+    if tipo_analise=='Tipo de Veículo':
 
-        df_tipo_veiculos = montar_df_analise_mensal(df_filtro_data, 'Tipo de Veiculo', tipo_de_veiculo)
+        df_resumo_performance_tipo_veiculo = df_filtro_data.groupby('Tipo de Veiculo').agg({'meta_batida': 'sum', 'Rota': 'count'}).reset_index()
+
+        df_resumo_performance_tipo_veiculo = criar_coluna_performance(df_resumo_performance_tipo_veiculo)
+
+        gb = GridOptionsBuilder.from_dataframe(df_resumo_performance_tipo_veiculo)
+        gb.configure_selection('single')
+        gb.configure_grid_options(domLayout='autoHeight')
+        gridOptions = gb.build()
 
         with row2[0]:
 
-            st.divider()
+            grid_response = AgGrid(df_resumo_performance_tipo_veiculo, gridOptions=gridOptions, 
+                                   enable_enterprise_modules=False, fit_columns_on_grid_load=True)
 
-            grafico_duas_barras_linha_percentual(df_tipo_veiculos, 'ano_mes', 'serviços', 'Serviços', 'meta_batida', 'Metas Batidas', 'performance', 'Performance', 
-                                                tipo_de_veiculo)
-            
-        st.divider()
+        selected_rows = grid_response['selected_rows']
 
-        veiculo, df_mes_atual, row3 = plotar_listas_sub_analise(df_filtro_data, 'Tipo de Veiculo', tipo_de_veiculo, 'Veiculo', 'Veículos')
+        if selected_rows is not None and len(selected_rows)>0:
 
-        if veiculo:
+            tipo_veiculo = selected_rows['Tipo de Veiculo'].iloc[0]
 
-            row2 = st.columns(1)
+            df_tipo_veiculo = montar_df_analise_mensal(df_filtro_data, 'Tipo de Veiculo', tipo_veiculo)
 
-            df_veiculos = montar_df_analise_mensal(df_filtro_data, 'Veiculo', veiculo)
+            with row2[1]:
 
-            with row2[0]:
-
-                grafico_duas_barras_linha_percentual(df_veiculos, 'ano_mes', 'serviços', 'Serviços', 'meta_batida', 'Metas Batidas', 'performance', 'Performance', 
-                                                    veiculo)
+                grafico_duas_barras_linha_percentual(df_tipo_veiculo, 'ano_mes', 'serviços', 'Serviços', 
+                                                    'meta_batida', 'Metas Batidas', 'performance', 'Performance', 
+                                                    tipo_veiculo)
                 
-            st.divider()
+            with row3[0]:
+                
+                st.divider()
 
-            plotar_tabela_mes_atual(df_filtro_data, 'Colaborador', 
-                                    {'Veiculo': 'Veículo', 'Consumo estimado': 'Serviços', 'meta_batida': 'Metas Batidas'})
+            df_resumo_performance_motorista_tipo_veiculo = df_filtro_data[df_filtro_data['Tipo de Veiculo']==tipo_veiculo].groupby('Veiculo')\
+                .agg({'meta_batida': 'sum', 'Rota': 'count'}).reset_index()
 
-    elif tipo_analise=='Motorista' and motorista:
+            df_resumo_performance_motorista_tipo_veiculo = criar_coluna_performance(df_resumo_performance_motorista_tipo_veiculo)
 
-        df_motorista = montar_df_analise_mensal(df_filtro_data, 'Colaborador', motorista)
+            gb = GridOptionsBuilder.from_dataframe(df_resumo_performance_motorista_tipo_veiculo)
+            gb.configure_selection('single')
+            gb.configure_grid_options(domLayout='autoHeight')
+            gridOptions = gb.build()
+
+            with row4[0]:
+
+                grid_response = AgGrid(df_resumo_performance_motorista_tipo_veiculo, gridOptions=gridOptions, 
+                                    enable_enterprise_modules=False, fit_columns_on_grid_load=True)
+                
+            selected_rows_2 = grid_response['selected_rows']
+
+            if selected_rows_2 is not None and len(selected_rows_2)>0:
+
+                veiculo = selected_rows_2['Veiculo'].iloc[0]
+
+                df_resumo_performance_motorista_veiculo = df_filtro_data[(df_filtro_data['Veiculo']==veiculo) & 
+                                                                            (df_filtro_data['Tipo de Veiculo']==tipo_veiculo)].groupby(['Colaborador'])\
+                                                                            .agg({'meta_batida': 'sum', 'Rota': 'count'}).reset_index()
+                
+                df_resumo_performance_motorista_veiculo = criar_coluna_performance(df_resumo_performance_motorista_veiculo)
+
+                gb = GridOptionsBuilder.from_dataframe(df_resumo_performance_motorista_veiculo)
+                gb.configure_selection('single')
+                gb.configure_grid_options(domLayout='autoHeight')
+                gridOptions = gb.build()
+
+                with row4[1]:
+
+                    grid_response = AgGrid(df_resumo_performance_motorista_veiculo, gridOptions=gridOptions, enable_enterprise_modules=False, 
+                                            fit_columns_on_grid_load=True)
+
+    elif tipo_analise=='Motorista':
+
+        df_resumo_performance_motorista = df_filtro_data.groupby('Colaborador').agg({'meta_batida': 'sum', 'Rota': 'count'}).reset_index()
+
+        df_resumo_performance_motorista = criar_coluna_performance(df_resumo_performance_motorista)
+
+        gb = GridOptionsBuilder.from_dataframe(df_resumo_performance_motorista)
+        gb.configure_selection('single')
+        gridOptions = gb.build()
 
         with row2[0]:
 
-            st.divider()
+            grid_response = AgGrid(df_resumo_performance_motorista, gridOptions=gridOptions, 
+                                   enable_enterprise_modules=False, fit_columns_on_grid_load=True)
 
-            grafico_duas_barras_linha_percentual(df_motorista, 'ano_mes', 'serviços', 'Serviços', 
-                                                'meta_batida', 'Metas Batidas', 'performance', 'Performance', 
-                                                motorista)
-            
-        st.divider()
+        selected_rows = grid_response['selected_rows']
 
-        tipo_veiculo, df_motorista_mes_atual, row3 = plotar_listas_sub_analise(df_filtro_data, 'Colaborador', motorista, 
-                                                                            'Tipo de Veiculo', 'Tipos de Veículos')
+        if selected_rows is not None and len(selected_rows)>0:
 
-        if tipo_veiculo:
+            motorista = selected_rows['Colaborador'].iloc[0]
 
-            df_tipo_veiculo = df_motorista_mes_atual[df_motorista_mes_atual['Tipo de Veiculo']==tipo_veiculo].reset_index(drop=True)
+            df_motorista = montar_df_analise_mensal(df_filtro_data, 'Colaborador', motorista)
 
-            df_tipo_veiculo_final = df_tipo_veiculo.groupby('Veiculo').agg({'Consumo estimado':'count', 'meta_batida': 'sum'}).reset_index()
+            with row2[1]:
 
-            df_tipo_veiculo_final = df_tipo_veiculo_final.rename(columns={'Veiculo': 'Veículo', 'Consumo estimado': 'Serviços', 'meta_batida': 'Metas Batidas'})
+                grafico_duas_barras_linha_percentual(df_motorista, 'ano_mes', 'serviços', 'Serviços', 
+                                                    'meta_batida', 'Metas Batidas', 'performance', 'Performance', 
+                                                    motorista)
+                
+            with row3[0]:
+                
+                st.divider()
 
-            df_tipo_veiculo_final['Performance'] = round(df_tipo_veiculo_final['Metas Batidas']/df_tipo_veiculo_final['Serviços'], 2)
+            df_resumo_performance_motorista_tipo_veiculo = df_filtro_data[df_filtro_data['Colaborador']==motorista].groupby('Tipo de Veiculo')\
+                .agg({'meta_batida': 'sum', 'Rota': 'count'}).reset_index()
 
-            for index, value in df_tipo_veiculo_final['Performance'].items():
+            df_resumo_performance_motorista_tipo_veiculo = criar_coluna_performance(df_resumo_performance_motorista_tipo_veiculo)
 
-                df_tipo_veiculo_final.at[index, 'Performance'] = f'{str(int(value*100))}%'
+            gb = GridOptionsBuilder.from_dataframe(df_resumo_performance_motorista_tipo_veiculo)
+            gb.configure_selection('single')
+            gb.configure_grid_options(domLayout='autoHeight')
+            gridOptions = gb.build()
 
-            df_tipo_veiculo_final_2 = df_tipo_veiculo.groupby('Tipo de Veiculo').agg({'Consumo estimado':'count', 'meta_batida': 'sum'}).reset_index()
+            with row4[0]:
 
-            df_tipo_veiculo_final_2 = df_tipo_veiculo_final_2.rename(columns={'Tipo de Veiculo': 'Tipo de Veículo', 'Consumo estimado': 'Serviços', 
-                                                                                'meta_batida': 'Metas Batidas'})
+                grid_response = AgGrid(df_resumo_performance_motorista_tipo_veiculo, gridOptions=gridOptions, 
+                                    enable_enterprise_modules=False, fit_columns_on_grid_load=True)
+                
+            selected_rows_2 = grid_response['selected_rows']
 
-            df_tipo_veiculo_final_2['Performance'] = round(df_tipo_veiculo_final_2['Metas Batidas']/df_tipo_veiculo_final_2['Serviços'], 2)
+            if selected_rows_2 is not None and len(selected_rows_2)>0:
 
-            for index, value in df_tipo_veiculo_final_2['Performance'].items():
+                tipo_veiculo = selected_rows_2['Tipo de Veiculo'].iloc[0]
 
-                df_tipo_veiculo_final_2.at[index, 'Performance'] = f'{str(int(value*100))}%'
+                df_resumo_performance_motorista_veiculo = df_filtro_data[(df_filtro_data['Colaborador']==motorista) & 
+                                                                            (df_filtro_data['Tipo de Veiculo']==tipo_veiculo)].groupby(['Veiculo'])\
+                                                                            .agg({'meta_batida': 'sum', 'Rota': 'count'}).reset_index()
+                
+                df_resumo_performance_motorista_veiculo = criar_coluna_performance(df_resumo_performance_motorista_veiculo)
 
-            with row3[1]:
+                gb = GridOptionsBuilder.from_dataframe(df_resumo_performance_motorista_veiculo)
+                gb.configure_selection('single')
+                gb.configure_grid_options(domLayout='autoHeight')
+                gridOptions = gb.build()
 
-                st.dataframe(df_tipo_veiculo_final_2, hide_index=True)
+                with row4[1]:
 
-                st.dataframe(df_tipo_veiculo_final, hide_index=True)
+                    grid_response = AgGrid(df_resumo_performance_motorista_veiculo, gridOptions=gridOptions, enable_enterprise_modules=False, 
+                                            fit_columns_on_grid_load=True)
