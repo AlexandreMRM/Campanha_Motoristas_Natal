@@ -42,6 +42,9 @@ def criar_dfs_excel():
 
     st.session_state.df_historico['Consumo estimado'] = pd.to_numeric(st.session_state.df_historico['Consumo estimado'], errors='coerce')
 
+    st.session_state.df_historico['Distância de abastecimentos'] = \
+    pd.to_numeric(st.session_state.df_historico['Distância de abastecimentos'], errors='coerce')
+
     st.session_state.df_frota['Veiculo'] = st.session_state.df_frota['Veiculo'].astype(str)
 
     st.session_state.df_historico = st.session_state.df_historico[st.session_state.df_historico['Veículo']!='Total'].reset_index(drop=True)
