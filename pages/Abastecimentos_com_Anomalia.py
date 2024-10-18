@@ -1,27 +1,69 @@
 import streamlit as st
 import pandas as pd
-import xlwings as xw
+from google.oauth2 import service_account
+import gspread 
+import webbrowser
 from datetime import datetime
-import matplotlib.pyplot as plt
 import numpy as np
 
 def criar_dfs_excel():
 
-    nome_excel = 'Campanha_Motoristas_Natal.xlsx'
+    nome_credencial = st.secrets["CREDENCIAL_SHEETS"]
+    credentials = service_account.Credentials.from_service_account_info(nome_credencial)
+    scope = ['https://www.googleapis.com/auth/spreadsheets']
+    credentials = credentials.with_scopes(scope)
+    client = gspread.authorize(credentials)
+    
+    spreadsheet = client.open_by_key('1m0qYTv7b0RIz9uqCrIuzRzLxc43Kz1utzLATv0HO8n0')
 
-    st.session_state.df_motoristas = pd.read_excel(nome_excel, sheet_name='BD - Motoristas')
+    lista_abas = ['BD - Motoristas', 'BD - Frota | Tipo', 'BD - Historico']
 
-    st.session_state.df_frota = pd.read_excel(nome_excel, sheet_name='BD - Frota | Tipo')
+    lista_df_hoteis = ['df_motoristas', 'df_frota', 'df_historico']
+
+    for index in range(len(lista_abas)):
+
+        aba = lista_abas[index]
+
+        df_hotel = lista_df_hoteis[index]
+        
+        sheet = spreadsheet.worksheet(aba)
+
+        sheet_data = sheet.get_all_values()
+
+        st.session_state[df_hotel] = pd.DataFrame(sheet_data[1:], columns=sheet_data[0])
+
+    st.session_state.df_historico['Consumo real'] = st.session_state.df_historico['Consumo real'].str.replace(',', '.')
+
+    st.session_state.df_historico['Consumo real'] = pd.to_numeric(st.session_state.df_historico['Consumo real'], errors='coerce')
+
+    st.session_state.df_historico['Consumo estimado'] = st.session_state.df_historico['Consumo estimado'].str.replace(',', '.')
+
+    st.session_state.df_historico['Consumo estimado'] = pd.to_numeric(st.session_state.df_historico['Consumo estimado'], errors='coerce')
+
+    st.session_state.df_historico['Distância de abastecimento'] = \
+    pd.to_numeric(st.session_state.df_historico['Distância de abastecimento'], errors='coerce')
+
+    st.session_state.df_historico['Quantidade'] = st.session_state.df_historico['Quantidade'].str.replace(',', '.')
+
+    st.session_state.df_historico['Quantidade'] = \
+    pd.to_numeric(st.session_state.df_historico['Quantidade'], errors='coerce')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace('R$ ', '')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace('.', '')
+
+    st.session_state.df_historico['Valor total'] = st.session_state.df_historico['Valor total'].str.replace(',', '.')
+
+    st.session_state.df_historico['Valor total'] = \
+    pd.to_numeric(st.session_state.df_historico['Valor total'], errors='coerce')
 
     st.session_state.df_frota['Veiculo'] = st.session_state.df_frota['Veiculo'].astype(str)
-
-    st.session_state.df_historico = pd.read_excel(nome_excel, sheet_name='BD - Historico')
 
     st.session_state.df_historico = st.session_state.df_historico[st.session_state.df_historico['Veículo']!='Total'].reset_index(drop=True)
 
     for index in range(len(st.session_state.df_historico)):
 
-        if pd.isna(st.session_state.df_historico.at[index, 'Veículo']):
+        if st.session_state.df_historico.at[index, 'Veículo']=='':
 
             st.session_state.df_historico.at[index, 'Veículo']=st.session_state.df_historico.at[index-1, 'Veículo']
 
@@ -33,7 +75,9 @@ def criar_dfs_excel():
 
             st.session_state.df_historico.loc[st.session_state.df_historico['Colaborador']==motorista, 'Colaborador']=\
                 st.session_state.df_motoristas.loc[st.session_state.df_motoristas['Motorista Sofit']==motorista, 'Motorista Análise'].values[0]
-            
+
+    st.session_state.df_historico['Data'] = pd.to_datetime(st.session_state.df_historico['Data'], format='%d/%m/%Y %H:%M:%S')
+    
     st.session_state.df_historico['ano'] = st.session_state.df_historico['Data'].dt.year
 
     st.session_state.df_historico['mes'] = st.session_state.df_historico['Data'].dt.month
