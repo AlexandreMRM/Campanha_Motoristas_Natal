@@ -102,8 +102,6 @@ st.title('Abastecimentos com Anomalias - Natal')
 
 st.divider()
 
-st.session_state.df_historico
-
 row0 = st.columns(1)
 
 if 'df_motoristas' not in st.session_state:
