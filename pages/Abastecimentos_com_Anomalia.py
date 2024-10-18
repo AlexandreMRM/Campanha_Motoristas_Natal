@@ -118,6 +118,10 @@ with row0[0]:
 
     percentual_anomalias = percentual_anomalias/100
 
+if atualizar_dfs_excel:
+
+    criar_dfs_excel()
+
 df_filtro_colunas = st.session_state.df_historico[['Data', 'Despesa', 'Veiculo', 'Consumo real', 'Consumo estimado', 'Percentual do Estimado']]
 
 df_filtro_colunas['Percentual do Estimado'] = df_filtro_colunas['Percentual do Estimado']/100
