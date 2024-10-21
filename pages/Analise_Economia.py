@@ -98,6 +98,8 @@ def criar_dfs_excel():
 
     st.session_state.df_historico['Apenas Data'] = st.session_state.df_historico['Data'].dt.date
 
+    st.session_state.df_historico['meta_batida'] = st.session_state.df_historico.apply(lambda row: 1 if row['Consumo real'] >= row['Consumo estimado'] else 0, axis = 1)
+
 def criar_df_merge(df_resumo_performance_tipo_veiculo, df_resumo_performance_tipo_veiculo_base, coluna_merge):
         
     df_resumo_performance_tipo_veiculo['Km/l | Período Atual'] = \
